@@ -1,9 +1,7 @@
 #!/bin/csh -f
 
-# This script executes UTH-Timer, the TimeKeepers' gate delay calculator
-# and runs simulation to generate golden results. Then
-# delay calculator is re-run to merge results and calculate
-# final score
+# This script executes the gate timing calculator of UTH-Timer (TimeKeepers' CCS timing calculation toolkit) and
+# runs simulation to generate golden results. Then delay calculator is re-run to merge results and calculate final score
 
 # Usage
 #    run_delay_calculator <testsuite_name>
@@ -17,11 +15,11 @@ if ("$1" == "") then
   exit
 endif
 
-# dataset name
+# Dataset name
 set dataset = $1
 
 # Technology Library
-set library = "../asap7/asap7sc7p5t_27/LIB/CCS/asap7sc7p5t_OA_RVT_TT_ccs_201020.postprocessed.lib"
+set library = "../asap7/asap7sc7p5t_27/LIB/CCS/asap7sc7p5t_ALL_RVT_TT_ccs_201020.postprocessed.lib"
 
 # delay calculation tool variables
 
@@ -47,7 +45,6 @@ else if ($simulator == "spectre") then
 else
   echo "Simulator $simulator NOT Supported!"
 endif
-
 
 echo "../bin/delay_calc_tool  --circuits $dataset.circuits.yaml  --liberty $library  --spef $dataset.spef  --dc_file $dataset.dc.circuits.yaml  --spice_lib $spice_lib  --spice_models $spice_models  --spice_dir $spice_decks   --run_sims   --simulator $simulator "
 # run CCS and SPICE delay calculation

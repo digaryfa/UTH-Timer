@@ -1,9 +1,9 @@
 # UTH-Timer
-"Gate delay estimation with library compatible CSMs and multiple Ceff", The TimeKeepers, University of Thessaly, Greece
+D. Garyfallou et al., “Gate Delay Estimation With Library Compatible Current Source Models and Effective Capacitance,” IEEE Trans. on Very Large Scale Integration (VLSI) Systems, vol. 29, no. 5, pp. 962–972, 2021. (The TimeKeepers, University of Thessaly, Greece)
 
 ## Introduction
 
-This README provides details on how to use UTH-Timer, TimeKeepers' CCS delay calculation toolkit.
+This README provides details on how to use the gate timing calculator of UTH-Timer, TimeKeepers' CCS timing calculation toolkit.
 
 This toolkit is an extended version of the [TAU 2020 contest Delay Calculator Toolkit (DCTK)](https://github.com/geochrist/dctk/tree/tau2020).
 
@@ -16,7 +16,7 @@ This toolkit is an extended version of the [TAU 2020 contest Delay Calculator To
 
 ## Scripts
 
-### ./generate_nets
+### ./generate_nets testsuite_name
 
 This csh script generates the dataset (Circuits YAML, SPEF, SPICE decks) with the ASU library:
 
@@ -27,9 +27,9 @@ This csh script generates the dataset (Circuits YAML, SPEF, SPICE decks) with th
 * generates SPICE decks for the testsuite
 
 
-### ./run_delay_calculator
+### ./run_delay_calculator testsuite_name
 
-This csh script reads the results from ./generate_nets script (Circuits YAML, SPEF, SPICE decks), computes the delays/slews for all circuits using UTH-Timer CCS delay calculator and SPICE simulation, merges the results, and writes the statistics in the merged YAML file:
+This csh script reads the results from ./generate_nets script (Circuits YAML, SPEF, SPICE decks), computes the driver delay/slew for all circuits using UTH-Timer's gate timing calculator and SPICE simulation, merges the results, and writes the statistics in the merged YAML file:
 
 [Executes delay_calc_tool binary]
 * runs UTH-Timer on the testsuite (using all available threads)
@@ -60,8 +60,8 @@ options:
 This application is the heart of the toolkit. It runs in the following modes:
 
 * generate SPICE decks and dump them into a folder
-* run UTH-Timer and dump results into a YAML file
 * run SPICE simulations (Xyce or SPECTRE) and dump results into a YAML file
+* run UTH-Timer and dump results into a YAML file
 * merge UTH-Timer's results with SPICE golden results and dump statistics into a YAML file
 
 ##### generate SPICE decks
@@ -74,7 +74,8 @@ options:
    --circuits CIRCUITS        *.circuits.yaml (required)
    --spef SPEF                *.spef corresponding to the *.circuits.yaml (required)
    --SPICE_dir DIRECTORY      directory for SPICE netlists (required)
-   --SPICE_lib SPICE_MODEL    SPICE models (required)
+   --spice_lib SPICE_LIBRARY  	SPICE transistor-level cell models (required)
+   --spice_models SPICE_MODELS  SPICE transistor models (required)
    --simulator SIMULATOR      simulator (xyce or spectre) (required) 
 
 ```
@@ -83,19 +84,6 @@ Note that the SPICE decks generated are simulator-specific:
 
 * Xyce SPICE decks include a preprocessing step
 * MEASURE syntax is different between Xyce and SPECTRE
-
-##### run delay calculation
-```
-bin/delay_calc_tool --dc_file DC_OUTPUT options
-
-options:
-   --liberty LIBERTY_FILE     Liberty Models for cells (required)
-   --circuits CIRCUITS        *.circuits.yaml (required)
-   --spef SPEF                *.spef corresponding to the *.circuits.yaml (required)
-
-```
-
-`DC_OUTPUT` is the output *.dc.circuits.yaml file that contains the UTH-Timer CCS delay calculation output.
 
 ##### run SPICE simulations
 
@@ -109,6 +97,19 @@ options:
 
 ```
 
+##### run UTH-Timer
+```
+bin/delay_calc_tool --dc_file DC_OUTPUT options
+
+options:
+   --liberty LIBERTY_FILE     Liberty Models for cells (required)
+   --circuits CIRCUITS        *.circuits.yaml (required)
+   --spef SPEF                *.spef corresponding to the *.circuits.yaml (required)
+
+```
+
+`DC_OUTPUT` is the output *.dc.circuits.yaml file that contains the UTH-Timer results.
+
 This writes the SPICE simulation results into files (`*.mt0` for Xyce and `*.measure` for SPECTRE)
 
 This type of invocation does not regenerate the SPICE decks.
@@ -118,7 +119,7 @@ This type of invocation does not regenerate the SPICE decks.
 bin/delay_calc_tool --merge_circuits MERGE_OUTPUT options
 
 options:
-   --circuits CIRCUITS        *.circuits.yaml (required)
+   --circuits CIRCUITS        *dc.circuits.yaml (UTH-Timer's results) (required)
    --SPICE_dir SPICE_DIR      directory with SPICE results (required)
    --simulator SIMULATOR      simulator (xyce or spectre) (required) 
 ```
@@ -134,8 +135,8 @@ options:
 ## Conventions
 
 * testsuite.circuits.yaml -- Circuit files containing only the testsuite
-* testsuite.dc.circuits.yaml -- Circuit files containing delay calculation results
-* testsuite.merge.circuits.yaml -- Circuit files containing both golden and delay calculation results (and scoring)
+* testsuite.dc.circuits.yaml -- Circuit files containing UTH-Timer results
+* testsuite.merge.circuits.yaml -- Circuit files containing both golden and UTH-Timer results (and scoring)
 * testsuite.spef -- pi-model RC parasitics for driver interconnect (admittance model)
 * testsuite.SPICE_decks -- Folder that contains all generated SPICE decks and results
 
@@ -144,7 +145,7 @@ options:
 
 * Inputs: ASU .lib, SPICE models, SPICE netlists of standard cells
 * Run "./generate_nets testsuite" to create YAML and SPEF files (testsuite.circuits.yaml, testsuite.spef, and .sp files in testsuite.SPICE_decks)
-* Run "./run_delay_calculator testsuite" to run UTH-Timer, SPICE and create a file with the results
+* Run "./run_delay_calculator testsuite" to run UTH-Timer, SPICE, and create a file with the results
 * Outputs: testsuite.dc.circuits.yaml and testsuite.merge.circuits.yaml
 
 ### Download and install Xyce
