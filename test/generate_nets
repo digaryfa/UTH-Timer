@@ -1,0 +1,61 @@
+#!/bin/csh -f
+
+# This script generates the dataset used to test the ML-enhanced stage timing predictor of UTH-Timer (TimeKeepers' CCS timing calculation toolkit)
+
+# Usage
+#    generate_nets <testsuite_name>
+#
+# Example:
+#    generate_nets tau2021_testsuite0130
+
+# checking arguments
+if ("$1" == "") then
+  echo Usage:  $0 testsuite_name
+  exit
+endif
+
+# Dataset name
+set dataset = $1
+
+# Number of circuits
+set stage_num = 2
+
+# Enable pi models?
+set pimodels = ""
+
+# Enable generation of stress cases?
+#set stress = "--stress"
+set stress = ""
+
+# Technology Library
+set library = "../asap7/asap7sc7p5t_27/LIB/CCS/asap7sc7p5t_INVBUF_RVT_TT_ccs_201020.postprocessed.lib"
+
+## Generate random dataset ##
+# output will be $dataset.circuits.yaml and $dataset.spef
+echo "../bin/gen_random_nets --liberty $library --dataset $dataset -n $stage_num $pimodels --waveform asu_exp $stress"
+../bin/gen_random_nets --liberty $library --dataset $dataset -n $stage_num $pimodels --waveform asu_exp $stress
+
+## Create SPICE decks ##
+# output will be all the SPICE netlists in the $dataset.SPICE_decks folder
+
+# SPICE decks directory
+set spice_decks = "$dataset.SPICE_decks"
+# SPICE lib gate models 
+set spice_lib = "../asap7/asap7sc7p5t_27/CDL/xAct3D_extracted/xyce/asap7sc7p5t_27_R_201024.sp.modified"
+# SPICE lib transistor models
+set spice_models = "../asap7/asap7PDK_r1p7/models/xyce/7nm_TT.pm.modified"
+
+rm -rf $spice_decks
+mkdir $spice_decks
+
+echo "../bin/delay_calc_tool --circuits $dataset.circuits.yaml --liberty $library --spef $dataset.spef --spice_lib $spice_lib --spice_models $spice_models --spice_dir $spice_decks --gen_spice_decks "
+
+../bin/delay_calc_tool \
+  --circuits $dataset.circuits.yaml \
+  --liberty $library \
+  --spef $dataset.spef \
+  --spice_lib $spice_lib \
+  --spice_models $spice_models \
+  --spice_dir $spice_decks \
+  --gen_spice_decks \
+

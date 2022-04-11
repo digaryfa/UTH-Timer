@@ -1,0 +1,52 @@
+#!/bin/csh -f
+
+# This script executes the ML-enhanced stage timing predictor of UTH-Timer (TimeKeepers' CCS timing calculation toolkit)
+# and runs simulation to generate golden results. Then, the delay calculator is re-run
+# to merge results and calculate final score
+
+# Usage
+#    run_delay_calculator <testsuite_name>
+#
+# Example:
+#    run_delay_calculator tau2021_testsuite0130
+
+# checking arguments
+if ("$1" == "") then
+  echo Usage:  $0 testsuite_name
+  exit
+endif
+
+# Dataset name
+set dataset = $1
+
+# Technology Library
+set library = "../asap7/asap7sc7p5t_27/LIB/CCS/asap7sc7p5t_INVBUF_RVT_TT_ccs_201020.postprocessed.lib"
+
+# SPICE decks directory
+set spice_decks = "$dataset.SPICE_decks"
+# SPICE lib gate models 
+set spice_lib = "../asap7/asap7sc7p5t_27/CDL/xAct3D_extracted/xyce/asap7sc7p5t_27_R_201024.sp.modified"
+# SPICE lib transistor models
+set spice_models = "../asap7/asap7PDK_r1p7/models/xyce/7nm_TT.pm.modified"
+
+
+# Run UTH-Timer and SPICE stage timing calculation
+echo " ../bin/delay_calc_tool --circuits $dataset.circuits.yaml --liberty $library --spef $dataset.spef --dc_file $dataset.dc.circuits.yaml --spice_lib $spice_lib --spice_models $spice_models --spice_dir $spice_decks --run_sims"
+../bin/delay_calc_tool \
+  --circuits $dataset.circuits.yaml \
+  --liberty $library \
+  --spef $dataset.spef \
+  --dc_file $dataset.dc.circuits.yaml \
+  --spice_lib $spice_lib \
+  --spice_models $spice_models \
+  --spice_dir $spice_decks \
+  --run_sims \
+
+# Merge UTH-Timer and SPICE results
+echo "../bin/delay_calc_tool --circuits $dataset.dc.circuits.yaml --spice_dir $spice_decks --liberty $library --spef $dataset.spef --merged_circuits $dataset.merged.circuits.yaml"
+../bin/delay_calc_tool \
+  --circuits $dataset.dc.circuits.yaml \
+  --spice_dir $spice_decks \
+  --merged_circuits $dataset.merged.circuits.yaml
+
+tail -16 $dataset.merged.circuits.yaml
