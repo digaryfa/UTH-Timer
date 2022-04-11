@@ -1,13 +1,14 @@
 #!/bin/csh -f
 
-# This script executes the gate timing calculator of UTH-Timer (TimeKeepers' CCS timing calculation toolkit) and
-# runs simulation to generate golden results. Then delay calculator is re-run to merge results and calculate final score
+# This script executes the ML-enhanced stage timing predictor of UTH-Timer (TimeKeepers' CCS timing calculation toolkit)
+# and runs simulation to generate golden results. Then, the delay calculator is re-run
+# to merge results and calculate final score
 
 # Usage
 #    run_delay_calculator <testsuite_name>
 #
 # Example:
-#    run_delay_calculator tau2020_testsuite0130
+#    run_delay_calculator tau2021_testsuite0130
 
 # checking arguments
 if ("$1" == "") then
@@ -19,35 +20,18 @@ endif
 set dataset = $1
 
 # Technology Library
-set library = "../asap7/asap7sc7p5t_27/LIB/CCS/asap7sc7p5t_AO_RVT_TT_ccs_201020.postprocessed.lib"
+set library = "../asap7/asap7sc7p5t_27/LIB/CCS/asap7sc7p5t_INVBUF_RVT_TT_ccs_201020.postprocessed.lib"
 
-# delay calculation tool variables
+# SPICE decks directory
+set spice_decks = "$dataset.SPICE_decks"
+# SPICE lib gate models 
+set spice_lib = "../asap7/asap7sc7p5t_27/CDL/xAct3D_extracted/xyce/asap7sc7p5t_27_R_201024.sp.modified"
+# SPICE lib transistor models
+set spice_models = "../asap7/asap7PDK_r1p7/models/xyce/7nm_TT.pm.modified"
 
-# simulator
-set simulator = xyce
 
-# spice decks directory
-set spice_decks = $dataset".spice_decks"
-
-if ($simulator == "xyce") then
-  # ASU 7nm library transistor models need preprocessing before being
-  # used with Xyce (as instructed by TAU2020 contest committee)
-
-  # spice lib transistor models
-  set spice_models = "../asap7/asap7PDK_r1p7/models/xyce/7nm_TT.pm.modified"
-  # spice lib gate models 
-  set spice_lib = "../asap7/asap7sc7p5t_27/CDL/xAct3D_extracted/xyce/asap7sc7p5t_27_R_201024.sp.modified"
-else if ($simulator == "spectre") then
-  # spice lib transistor models
-  set spice_models = "../asap7/asap7PDK_r1p7/models/spectre/7nm_TT.pm"
-  # spice lib gate models 
-  set spice_lib = "../asap7/asap7sc7p5t_27/CDL/xAct3D_extracted/spectre/asap7sc7p5t_27_R_201024.sp"
-else
-  echo "Simulator $simulator NOT Supported!"
-endif
-
-echo "../bin/delay_calc_tool  --circuits $dataset.circuits.yaml  --liberty $library  --spef $dataset.spef  --dc_file $dataset.dc.circuits.yaml  --spice_lib $spice_lib  --spice_models $spice_models  --spice_dir $spice_decks   --run_sims   --simulator $simulator "
-# run CCS and SPICE delay calculation
+# Run UTH-Timer and SPICE stage timing calculation
+echo " ../bin/delay_calc_tool --circuits $dataset.circuits.yaml --liberty $library --spef $dataset.spef --dc_file $dataset.dc.circuits.yaml --spice_lib $spice_lib --spice_models $spice_models --spice_dir $spice_decks --run_sims"
 ../bin/delay_calc_tool \
   --circuits $dataset.circuits.yaml \
   --liberty $library \
@@ -57,14 +41,12 @@ echo "../bin/delay_calc_tool  --circuits $dataset.circuits.yaml  --liberty $libr
   --spice_models $spice_models \
   --spice_dir $spice_decks \
   --run_sims \
-  --simulator $simulator 
 
-echo "../bin/delay_calc_tool --circuits $dataset.dc.circuits.yaml --spice_dir $spice_decks --simulator $simulator --merged_circuits $dataset.merged.circuits.yaml"
-# merge Delay Calculator and Spice results
+# Merge UTH-Timer and SPICE results
+echo "../bin/delay_calc_tool --circuits $dataset.dc.circuits.yaml --spice_dir $spice_decks --liberty $library --spef $dataset.spef --merged_circuits $dataset.merged.circuits.yaml"
 ../bin/delay_calc_tool \
   --circuits $dataset.dc.circuits.yaml \
   --spice_dir $spice_decks \
-  --simulator $simulator \
   --merged_circuits $dataset.merged.circuits.yaml
 
-tail -10 $dataset.merged.circuits.yaml
+tail -16 $dataset.merged.circuits.yaml
