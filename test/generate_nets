@@ -27,7 +27,7 @@ set pimodels = "--pimodels"
 # Create Dataset (Circuits YAML, SPEF)
 
 # Technology Library
-set library = "../asap7/asap7sc7p5t_27/LIB/CCS/asap7sc7p5t_ALL_RVT_TT_ccs_201020.postprocessed.lib"
+set library = "../asap7/asap7sc7p5t_27/LIB/CCS/asap7sc7p5t_AO_RVT_TT_ccs_201020.postprocessed.lib"
 
 ## Generate random dataset ##
 # output will be $dataset.circuits.yaml and $dataset.spef
